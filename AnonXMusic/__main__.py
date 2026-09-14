@@ -51,7 +51,7 @@ async def init():
     await Anony.decorators()
     await idle()
     await app.stop()
-    LOGGER("AnonXMusic").info("Stopping AnonX Music Bot...")
+    LOGGER("AnonXMusic").info("Stopping X BEATS...")
 
 
 if __name__ == "__main__":

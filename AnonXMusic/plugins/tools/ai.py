@@ -1,4 +1,4 @@
-## ADDED AI FROM xbitcode api.
+## AI module.
 
 import requests
 import json

@@ -1,12 +1,12 @@
 {
-    "name": "xBitMuisc",
+    "name": "X BEATS",
     "description": "A Telegram Music Player Bot, written in Python with Pyrogram and Py-Tgcalls.",
     "logo": "https://imgur.com/a/zdIwpug",
     "keywords": [
     "python3",
     "telegram",
     "bot",
-    "AnonX",
+    "X BEATS",
     "MusicBot",
     "telegram-bot",
     "pyrogram"
@@ -34,7 +34,7 @@
       },
       "YTPROXY_URL": {
         "description": "YT Proxy Server Endpoint",
-        "value": "https://tgapi.xbitcode.com",
+        "value": "",
         "required": true
       },
         "YT_API_KEY": {
