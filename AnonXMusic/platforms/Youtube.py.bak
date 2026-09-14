@@ -17,7 +17,7 @@ from ytSearch import VideosSearch, Playlist
 from AnonXMusic import LOGGER
 from AnonXMusic.utils.database import is_on_off
 from AnonXMusic.utils.formatters import time_to_seconds
-from config import YTDLP_API_KEY, YTDLP_API_URL
+from config import YT_API_KEY, YTPROXY_URL as YTPROXY
 
 logger = LOGGER(__name__)
 
@@ -334,10 +334,6 @@ class YouTubeAPI:
         if videoid:
             vid_id = link
             link = self.base + link
-        else:
-            vid_id = link.split("v=")[-1].split("&")[0].split("?")[0]
-            if len(vid_id) != 11:
-                vid_id = link.rstrip("/").split("/")[-1].split("?")[0]
         loop = asyncio.get_running_loop()
 
         def create_session():
@@ -384,15 +380,15 @@ class YouTubeAPI:
 
         async def audio_dl(vid_id):
             try:
-                if not YTDLP_API_KEY:
+                if not YT_API_KEY:
                     logger.error("API KEY not set in config, Set API Key you got from @tgmusic_apibot")
                     return None
-                if not YTDLP_API_URL:
-                    logger.error("API Endpoint not set in config\nPlease set a valid endpoint for YTDLP_API_URL in config.")
+                if not YTPROXY:
+                    logger.error("API Endpoint not set in config\nPlease set a valid endpoint for YTPROXY_URL in config.")
                     return None
                 
                 headers = {
-                    "Authorization": f"Bearer {YTDLP_API_KEY}",
+                    "x-api-key": f"{YT_API_KEY}",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
                 }
                 
@@ -402,7 +398,7 @@ class YouTubeAPI:
                     return filepath
                 
                 session = create_session()
-                getAudio = session.get(f"{YTDLP_API_URL}/stream", params={"q": f"{self.base}{vid_id}", "mode": "audio"}, headers=headers, timeout=60)
+                getAudio = session.get(f"{YTPROXY}/info/{vid_id}", headers=headers, timeout=60)
                 
                 try:
                     songData = getAudio.json()
@@ -412,9 +408,9 @@ class YouTubeAPI:
                 finally:
                     session.close()
                 
-                status = 'success' if songData.get('stream_url') else 'error'
+                status = songData.get('status')
                 if status == 'success':
-                    audio_url = songData['stream_url']                    
+                    audio_url = songData['audio_url']                    
                     result = await download_with_requests(audio_url, filepath, headers)
                     if result:
                         return result
@@ -440,15 +436,15 @@ class YouTubeAPI:
         
         async def video_dl(vid_id):
             try:
-                if not YTDLP_API_KEY:
+                if not YT_API_KEY:
                     logger.error("API KEY not set in config, Set API Key you got from @tgmusic_apibot")
                     return None
-                if not YTDLP_API_URL:
-                    logger.error("API Endpoint not set in config\nPlease set a valid endpoint for YTDLP_API_URL in config.")
+                if not YTPROXY:
+                    logger.error("API Endpoint not set in config\nPlease set a valid endpoint for YTPROXY_URL in config.")
                     return None
                 
                 headers = {
-                    "Authorization": f"Bearer {YTDLP_API_KEY}",
+                    "x-api-key": f"{YT_API_KEY}",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
                 }
                 
@@ -458,7 +454,7 @@ class YouTubeAPI:
                     return filepath
                 
                 session = create_session()
-                getVideo = session.get(f"{YTDLP_API_URL}/stream", params={"q": f"{self.base}{vid_id}", "mode": "video"}, headers=headers, timeout=60)
+                getVideo = session.get(f"{YTPROXY}/info/{vid_id}", headers=headers, timeout=60)
                 
                 try:
                     videoData = getVideo.json()
@@ -468,9 +464,9 @@ class YouTubeAPI:
                 finally:
                     session.close()
                 
-                status = 'success' if videoData.get('stream_url') else 'error'
+                status = videoData.get('status')
                 if status == 'success':
-                    video_url = videoData['stream_url']
+                    video_url = videoData['video_url']
                     #video_url = base64.b64decode(videolink).decode() removed in 3.5.0
                     
                     result = await download_with_requests(video_url, filepath, headers)
@@ -497,15 +493,15 @@ class YouTubeAPI:
         
         async def song_video_dl():
             try:
-                if not YTDLP_API_KEY:
+                if not YT_API_KEY:
                     logger.error("API KEY not set in config")
                     return None
-                if not YTDLP_API_URL:
+                if not YTPROXY:
                     logger.error("API Endpoint not set in config")
                     return None
                 
                 headers = {
-                    "Authorization": f"Bearer {YTDLP_API_KEY}",
+                    "x-api-key": f"{YT_API_KEY}",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
                 }
                 
@@ -515,7 +511,7 @@ class YouTubeAPI:
                     return filepath
                 
                 session = create_session()
-                getVideo = session.get(f"{YTDLP_API_URL}/stream", params={"q": f"{self.base}{vid_id}", "mode": "video"}, headers=headers, timeout=60)
+                getVideo = session.get(f"{YTPROXY}/info/{vid_id}", headers=headers, timeout=60)
                 
                 try:
                     videoData = getVideo.json()
@@ -525,9 +521,9 @@ class YouTubeAPI:
                 finally:
                     session.close()
                 
-                status = 'success' if videoData.get('stream_url') else 'error'
+                status = videoData.get('status')
                 if status == 'success':
-                    video_url = videoData['stream_url']
+                    video_url = videoData['video_url']
                     
                     result = await download_with_requests(video_url, filepath, headers)
                     return result
@@ -541,15 +537,15 @@ class YouTubeAPI:
 
         async def song_audio_dl():
             try:
-                if not YTDLP_API_KEY:
+                if not YT_API_KEY:
                     logger.error("API KEY not set in config")
                     return None
-                if not YTDLP_API_URL:
+                if not YTPROXY:
                     logger.error("API Endpoint not set in config")
                     return None
                 
                 headers = {
-                    "Authorization": f"Bearer {YTDLP_API_KEY}",
+                    "x-api-key": f"{YT_API_KEY}",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
                 }
                 
@@ -559,7 +555,7 @@ class YouTubeAPI:
                     return filepath
                 
                 session = create_session()
-                getAudio = session.get(f"{YTDLP_API_URL}/stream", params={"q": f"{self.base}{vid_id}", "mode": "audio"}, headers=headers, timeout=60)
+                getAudio = session.get(f"{YTPROXY}/info/{vid_id}", headers=headers, timeout=60)
                 
                 try:
                     audioData = getAudio.json()
@@ -569,9 +565,9 @@ class YouTubeAPI:
                 finally:
                     session.close()
                 
-                status = 'success' if audioData.get('stream_url') else 'error'
+                status = audioData.get('status')
                 if status == 'success':
-                    audio_url = audioData['stream_url']
+                    audio_url = audioData['audio_url']
                     
                     result = await download_with_requests(audio_url, filepath, headers)
                     return result

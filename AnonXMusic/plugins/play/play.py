@@ -393,7 +393,7 @@ async def play_commnd(
             )
             await mystic.delete()
             await message.reply_photo(
-                photo=img,
+                photo="https://files.catbox.moe/4vfxve.jpg",
                 caption=cap,
                 reply_markup=InlineKeyboardMarkup(buttons),
             )
@@ -411,7 +411,7 @@ async def play_commnd(
                 )
                 await mystic.delete()
                 await message.reply_photo(
-                    photo=details["thumb"],
+                    photo="https://files.catbox.moe/4vfxve.jpg",
                     caption=_["play_10"].format(
                         details["title"].title(),
                         details["duration_min"],
@@ -429,7 +429,7 @@ async def play_commnd(
                 )
                 await mystic.delete()
                 await message.reply_photo(
-                    photo=img,
+                    photo="https://files.catbox.moe/4vfxve.jpg",
                     caption=cap,
                     reply_markup=InlineKeyboardMarkup(buttons),
                 )

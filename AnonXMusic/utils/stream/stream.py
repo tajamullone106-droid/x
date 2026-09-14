@@ -102,7 +102,7 @@ async def stream(
                 button = stream_markup(_, chat_id)
                 run = await app.send_photo(
                     original_chat_id,
-                    photo=img,
+                    photo="https://files.catbox.moe/4vfxve.jpg",
                     caption=_["stream_1"].format(
                         f"https://t.me/{app.username}?start=info_{vidid}",
                         title[:23],
@@ -188,7 +188,7 @@ async def stream(
             button = stream_markup(_, chat_id)
             run = await app.send_photo(
                 original_chat_id,
-                photo=img,
+                photo="https://files.catbox.moe/4vfxve.jpg",
                 caption=_["stream_1"].format(
                     f"https://t.me/{app.username}?start=info_{vidid}",
                     title[:23],
@@ -356,7 +356,7 @@ async def stream(
             button = stream_markup(_, chat_id)
             run = await app.send_photo(
                 original_chat_id,
-                photo=img,
+                photo="https://files.catbox.moe/4vfxve.jpg",
                 caption=_["stream_1"].format(
                     f"https://t.me/{app.username}?start=info_{vidid}",
                     title[:23],
