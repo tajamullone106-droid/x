@@ -4,6 +4,38 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.enums import ButtonStyle
 
 
+
+
+
+def format_queue_caption(now_title, now_duration, by, queued):
+    from html import escape
+
+    safe_title = escape(str(now_title))
+    safe_duration = escape(str(now_duration))
+    safe_by = escape(str(by))
+
+    lines = [
+        "<blockquote>❖ <b>Qᴜᴇᴜᴇ</b></blockquote>",
+        "<blockquote>"
+        f"◯ <b>Nᴏᴡ Pʟᴀʏɪɴɢ :</b> {safe_title}\n"
+        f"◯ <b>Dᴜʀᴀᴛɪᴏɴ :</b> {safe_duration}\n"
+        f"◯ <b>Bʏ :</b> {safe_by}"
+        "</blockquote>",
+    ]
+
+    for index, (title, duration) in enumerate(queued, start=2):
+        safe_queue_title = escape(str(title))
+        safe_queue_duration = escape(str(duration))
+        lines.append(
+            "<blockquote>"
+            f"◯ <b>#{index} —</b> {safe_queue_title} "
+            f"<b>({safe_queue_duration})</b>"
+            "</blockquote>"
+        )
+
+    return "\n".join(lines)
+
+
 def queue_markup(
     _,
     DURATION,

@@ -30,6 +30,41 @@ from config import BANNED_USERS, LOGGER_ID
 from strings import get_string
 
 
+_START_STICKER_INDEX = 0
+_START_STICKERS = None
+_START_STICKER_PACK = "Ishahahahahahaha_by_fStikBot"
+
+
+def get_next_start_sticker(stickers):
+    global _START_STICKER_INDEX
+
+    if not stickers:
+        return None
+
+    sticker = stickers[_START_STICKER_INDEX % len(stickers)]
+    _START_STICKER_INDEX += 1
+    return sticker
+
+
+async def _load_start_stickers():
+    global _START_STICKERS
+
+    if _START_STICKERS is None:
+        stickers = await app.get_stickers(_START_STICKER_PACK)
+        _START_STICKERS = [sticker.file_id for sticker in stickers]
+
+    return _START_STICKERS
+
+
+async def _send_rotating_start_sticker(message):
+    stickers = await _load_start_stickers()
+    sticker_id = get_next_start_sticker(stickers)
+
+    if sticker_id:
+        sticker_message = await message.reply_sticker(sticker_id)
+        await sticker_message.delete()
+
+
 @app.on_message(filters.command(["start"]) & filters.private & ~BANNED_USERS)
 @LanguageStart
 async def start_pm(client, message: Message, _):
@@ -38,7 +73,7 @@ async def start_pm(client, message: Message, _):
         name = message.text.split(None, 1)[1]
         if name[0:4] == "help":
             keyboard = help_pannel(_)
-            await message.reply_sticker("CAACAgUAAx0CdQO5IgACMTplUFOpwDjf-UC7pqVt9uG659qxWQACfQkAAghYGFVtSkRZ5FZQXDME")
+            await _send_rotating_start_sticker(message)
             return await message.reply_photo(
                 photo=random.choice(config.START_IMG_URL),
                 caption=_["help_1"].format(config.SUPPORT_CHAT),
@@ -91,7 +126,7 @@ async def start_pm(client, message: Message, _):
                 )
     else:
         out = private_panel(_)
-        await message.reply_sticker("CAACAgUAAx0CdQO5IgACMTplUFOpwDjf-UC7pqVt9uG659qxWQACfQkAAghYGFVtSkRZ5FZQXDME")
+        await _send_rotating_start_sticker(message)
         await message.reply_video(
             video="https://files.catbox.moe/b6sdow.mp4",
             caption=_["start_2"].format(message.from_user.mention, app.mention),

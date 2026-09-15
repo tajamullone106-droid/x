@@ -13,20 +13,31 @@ from AnonXMusic.utils.exceptions import AssistantErr
 from AnonXMusic.utils.inline import aq_markup, close_markup, stream_markup
 from AnonXMusic.utils.pastebin import AnonyBin
 from AnonXMusic.utils.stream.queue import put_queue, put_queue_index
+from AnonXMusic.utils.stream.caption import format_queue_add_caption
 from AnonXMusic.utils.thumbnails import get_thumb
 
 
-def format_stream_caption(title, duration, by):
+def format_stream_caption(title, duration, by, info_link=None):
+    from html import escape
+
+    safe_title = escape(str(title))
+    safe_duration = escape(str(duration))
+    safe_by = escape(str(by))
+
+    if info_link:
+        title_text = f'<a href="{escape(str(info_link), quote=True)}">{safe_title}</a>'
+    else:
+        title_text = safe_title
+
     return (
-        f"> ❖ **Sᴛᴀʀᴛᴇᴅ Sᴛʀᴇᴀᴍɪɴɢ**\n"
-        f">\n"
-        f"> ◯ **Tɪᴛʟᴇ :** {title}\n"
-        f">\n"
-        f"> ◯ **Dᴜʀᴀᴛɪᴏɴ :** {duration}\n"
-        f">\n"
-        f"> ◯ **Bʏ :** {by}\n"
-        f">\n"
-        f"> ❖ **Mᴀᴅᴇ Bʏ :** [Ayush](https://t.me/Civilianssz)"
+        f"<blockquote>❖ <b>Sᴛᴀʀᴛᴇᴅ Sᴛʀᴇᴀᴍɪɴɢ</b></blockquote>\n"
+        f"<blockquote>"
+        f"◯ <b>Tɪᴛʟᴇ :</b> {title_text}\n"
+        f"◯ <b>Dᴜʀᴀᴛɪᴏɴ :</b> {safe_duration} Mɪɴᴜᴛᴇs\n"
+        f"◯ <b>Bʏ :</b> {safe_by}"
+        f"</blockquote>\n"
+        f'<blockquote>❖ <b>Mᴀᴅᴇ Bʏ...</b> '
+        f'<a href="https://t.me/Civilianssz">Ayush</a></blockquote>'
     )
 
 
@@ -168,11 +179,21 @@ async def stream(
                 user_id,
                 "video" if video else "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id))
+            current = db.get(chat_id)[0]
             button = aq_markup(_, chat_id)
+            queue_caption = format_queue_add_caption(
+                current_title=current.get("title", "Unknown").title(),
+                current_duration=current.get("dur", "Unknown"),
+                current_by=current.get("by", "Unknown"),
+                added_title=title[:27],
+                added_duration=duration_min,
+                added_by=user_name,
+                position=position,
+            )
             await app.send_message(
                 chat_id=original_chat_id,
-                text=_["queue_4"].format(position, title[:27], duration_min, user_name),
+                text=queue_caption,
                 reply_markup=InlineKeyboardMarkup(button),
             )
         else:
@@ -227,11 +248,21 @@ async def stream(
                 user_id,
                 "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id))
+            current = db.get(chat_id)[0]
             button = aq_markup(_, chat_id)
+            queue_caption = format_queue_add_caption(
+                current_title=current.get("title", "Unknown").title(),
+                current_duration=current.get("dur", "Unknown"),
+                current_by=current.get("by", "Unknown"),
+                added_title=title[:27],
+                added_duration=duration_min,
+                added_by=user_name,
+                position=position,
+            )
             await app.send_message(
                 chat_id=original_chat_id,
-                text=_["queue_4"].format(position, title[:27], duration_min, user_name),
+                text=queue_caption,
                 reply_markup=InlineKeyboardMarkup(button),
             )
         else:
@@ -281,11 +312,21 @@ async def stream(
                 user_id,
                 "video" if video else "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id))
+            current = db.get(chat_id)[0]
             button = aq_markup(_, chat_id)
+            queue_caption = format_queue_add_caption(
+                current_title=current.get("title", "Unknown").title(),
+                current_duration=current.get("dur", "Unknown"),
+                current_by=current.get("by", "Unknown"),
+                added_title=title[:27],
+                added_duration=duration_min,
+                added_by=user_name,
+                position=position,
+            )
             await app.send_message(
                 chat_id=original_chat_id,
-                text=_["queue_4"].format(position, title[:27], duration_min, user_name),
+                text=queue_caption,
                 reply_markup=InlineKeyboardMarkup(button),
             )
         else:
@@ -338,11 +379,21 @@ async def stream(
                 user_id,
                 "video" if video else "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id))
+            current = db.get(chat_id)[0]
             button = aq_markup(_, chat_id)
+            queue_caption = format_queue_add_caption(
+                current_title=current.get("title", "Unknown").title(),
+                current_duration=current.get("dur", "Unknown"),
+                current_by=current.get("by", "Unknown"),
+                added_title=title[:27],
+                added_duration=duration_min,
+                added_by=user_name,
+                position=position,
+            )
             await app.send_message(
                 chat_id=original_chat_id,
-                text=_["queue_4"].format(position, title[:27], duration_min, user_name),
+                text=queue_caption,
                 reply_markup=InlineKeyboardMarkup(button),
             )
         else:
@@ -399,10 +450,20 @@ async def stream(
                 link,
                 "video" if video else "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id))
+            current = db.get(chat_id)[0]
             button = aq_markup(_, chat_id)
+            queue_caption = format_queue_add_caption(
+                current_title=current.get("title", "Unknown").title(),
+                current_duration=current.get("dur", "Unknown"),
+                current_by=current.get("by", "Unknown"),
+                added_title=title[:27],
+                added_duration=duration_min,
+                added_by=user_name,
+                position=position,
+            )
             await mystic.edit_text(
-                text=_["queue_4"].format(position, title[:27], duration_min, user_name),
+                text=queue_caption,
                 reply_markup=InlineKeyboardMarkup(button),
             )
         else:
@@ -429,7 +490,12 @@ async def stream(
             run = await app.send_photo(
                 original_chat_id,
                 photo=config.STREAM_IMG_URL,
-                caption=_["stream_2"].format(user_name),
+                caption=format_stream_caption(
+                    title[:23],
+                    duration_min,
+                    user_name,
+                    link,
+                ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run

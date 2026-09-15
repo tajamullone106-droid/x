@@ -11,7 +11,11 @@ from AnonXMusic.misc import db
 from AnonXMusic.utils import AnonyBin, get_channeplayCB, seconds_to_min
 from AnonXMusic.utils.database import get_cmode, is_active_chat, is_music_playing
 from AnonXMusic.utils.decorators.language import language, languageCB
-from AnonXMusic.utils.inline import queue_back_markup, queue_markup
+from AnonXMusic.utils.inline import (
+    format_queue_caption,
+    queue_back_markup,
+    queue_markup,
+)
 from config import BANNED_USERS
 
 basic = {}
@@ -83,7 +87,21 @@ async def get_queue(client, message: Message, _):
         else:
             IMAGE = get_image(videoid)
     send = _["queue_6"] if DUR == "Unknown" else _["queue_7"]
-    cap = _["queue_8"].format(app.mention, title, typo, user, send)
+    queued = [
+        (
+            item.get("title", "Unknown").title(),
+            seconds_to_min(int(item.get("seconds", 0)))
+            if int(item.get("seconds", 0)) > 0
+            else "Unknown",
+        )
+        for item in got[1:]
+    ]
+    cap = format_queue_caption(
+        title,
+        "Unknown" if DUR == "Unknown" else seconds_to_min(int(got[0]["seconds"])),
+        user,
+        queued,
+    )
     upl = (
         queue_markup(_, DUR, "c" if cplay else "g", videoid)
         if DUR == "Unknown"
@@ -223,7 +241,21 @@ async def queue_back(client, CallbackQuery: CallbackQuery, _):
         else:
             IMAGE = get_image(videoid)
     send = _["queue_6"] if DUR == "Unknown" else _["queue_7"]
-    cap = _["queue_8"].format(app.mention, title, typo, user, send)
+    queued = [
+        (
+            item.get("title", "Unknown").title(),
+            seconds_to_min(int(item.get("seconds", 0)))
+            if int(item.get("seconds", 0)) > 0
+            else "Unknown",
+        )
+        for item in got[1:]
+    ]
+    cap = format_queue_caption(
+        title,
+        "Unknown" if DUR == "Unknown" else seconds_to_min(int(got[0]["seconds"])),
+        user,
+        queued,
+    )
     upl = (
         queue_markup(_, DUR, cplay, videoid)
         if DUR == "Unknown"

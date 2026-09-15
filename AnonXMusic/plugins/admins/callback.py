@@ -21,6 +21,7 @@ from AnonXMusic.utils.decorators.language import languageCB
 from AnonXMusic.utils.formatters import seconds_to_min
 from AnonXMusic.utils.inline import close_markup, stream_markup, stream_markup_timer
 from AnonXMusic.utils.thumbnails import get_thumb
+from AnonXMusic.utils.stream.caption import format_stream_caption
 from config import (
     BANNED_USERS,
     SOUNCLOUD_IMG_URL,
@@ -232,11 +233,11 @@ async def del_back_playlist(client, CallbackQuery:CallbackQuery, _):
             img = await get_thumb(videoid,user_id)
             run = await CallbackQuery.message.reply_photo(
                 photo=img,
-                caption=_["stream_1"].format(
-                    f"https://t.me/{app.username}?start=info_{videoid}",
+                caption=format_stream_caption(
                     title[:23],
                     duration,
                     user,
+                    f"https://t.me/{app.username}?start=info_{videoid}",
                 ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
@@ -268,11 +269,11 @@ async def del_back_playlist(client, CallbackQuery:CallbackQuery, _):
             img = await get_thumb(videoid,user_id)
             run = await CallbackQuery.message.reply_photo(
                 photo=img,
-                caption=_["stream_1"].format(
-                    f"https://t.me/{app.username}?start=info_{videoid}",
+                caption=format_stream_caption(
                     title[:23],
                     duration,
                     user,
+                    f"https://t.me/{app.username}?start=info_{videoid}",
                 ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
@@ -288,7 +289,11 @@ async def del_back_playlist(client, CallbackQuery:CallbackQuery, _):
             button = stream_markup(_, chat_id)
             run = await CallbackQuery.message.reply_photo(
                 photo=STREAM_IMG_URL,
-                caption=_["stream_2"].format(user),
+                caption=format_stream_caption(
+                    title[:23],
+                    check[0]["dur"],
+                    user,
+                ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
@@ -314,9 +319,12 @@ async def del_back_playlist(client, CallbackQuery:CallbackQuery, _):
                     photo=TELEGRAM_AUDIO_URL
                     if str(streamtype) == "audio"
                     else TELEGRAM_VIDEO_URL,
-                    caption=_["stream_1"].format(
-                        SUPPORT_CHAT, title[:23], duration, user
-                    ),
+                    caption=format_stream_caption(
+                    title[:23],
+                    duration,
+                    user,
+                    SUPPORT_CHAT,
+                ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
                 db[chat_id][0]["mystic"] = run
@@ -327,9 +335,12 @@ async def del_back_playlist(client, CallbackQuery:CallbackQuery, _):
                     photo=SOUNCLOUD_IMG_URL
                     if str(streamtype) == "audio"
                     else TELEGRAM_VIDEO_URL,
-                    caption=_["stream_1"].format(
-                        SUPPORT_CHAT, title[:23], duration, user
-                    ),
+                    caption=format_stream_caption(
+                    title[:23],
+                    duration,
+                    user,
+                    SUPPORT_CHAT,
+                ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
                 db[chat_id][0]["mystic"] = run
@@ -339,12 +350,12 @@ async def del_back_playlist(client, CallbackQuery:CallbackQuery, _):
                 img = await get_thumb(videoid,user_id)
                 run = await CallbackQuery.message.reply_photo(
                     photo=img,
-                    caption=_["stream_1"].format(
-                        f"https://t.me/{app.username}?start=info_{videoid}",
-                        title[:23],
-                        duration,
-                        user,
-                    ),
+                    caption=format_stream_caption(
+                    title[:23],
+                    duration,
+                    user,
+                    f"https://t.me/{app.username}?start=info_{videoid}",
+                ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
                 db[chat_id][0]["mystic"] = run

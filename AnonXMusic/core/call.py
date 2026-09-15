@@ -38,6 +38,7 @@ from AnonXMusic.utils.inline.play import stream_markup
 from AnonXMusic.utils.thumbnails import get_thumb
 from strings import get_string
 from AnonXMusic.platforms.Youtube import cookie_txt_file
+from AnonXMusic.utils.stream.caption import format_stream_caption
 
 autoend = {}
 counter = {}
@@ -416,12 +417,12 @@ class Call(PyTgCalls):
                 run = await app.send_photo(
                     chat_id=original_chat_id,
                     photo="https://files.catbox.moe/4vfxve.jpg",
-                    caption=_["stream_1"].format(
-                        f"https://t.me/{app.username}?start=info_{videoid}",
-                        title[:23],
-                        check[0]["dur"],
-                        user,
-                    ),
+                    caption=format_stream_caption(
+                    title[:23],
+                    check[0]["dur"],
+                    user,
+                    f"https://t.me/{app.username}?start=info_{videoid}",
+                ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
                 db[chat_id][0]["mystic"] = run
@@ -464,12 +465,12 @@ class Call(PyTgCalls):
                 run = await app.send_photo(
                     chat_id=original_chat_id,
                     photo="https://files.catbox.moe/4vfxve.jpg",
-                    caption=_["stream_1"].format(
-                        f"https://t.me/{app.username}?start=info_{videoid}",
-                        title[:23],
-                        check[0]["dur"],
-                        user,
-                    ),
+                    caption=format_stream_caption(
+                    title[:23],
+                    check[0]["dur"],
+                    user,
+                    f"https://t.me/{app.username}?start=info_{videoid}",
+                ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
                 db[chat_id][0]["mystic"] = run
@@ -495,7 +496,11 @@ class Call(PyTgCalls):
                 run = await app.send_photo(
                     chat_id=original_chat_id,
                     photo=config.STREAM_IMG_URL,
-                    caption=_["stream_2"].format(user),
+                    caption=format_stream_caption(
+                    title[:23],
+                    check[0]["dur"],
+                    user,
+                ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
                 db[chat_id][0]["mystic"] = run
@@ -527,9 +532,12 @@ class Call(PyTgCalls):
                         photo=config.TELEGRAM_AUDIO_URL
                         if str(streamtype) == "audio"
                         else config.TELEGRAM_VIDEO_URL,
-                        caption=_["stream_1"].format(
-                            config.SUPPORT_CHAT, title[:23], check[0]["dur"], user
-                        ),
+                        caption=format_stream_caption(
+                    title[:23],
+                    check[0]["dur"],
+                    user,
+                    config.SUPPORT_CHAT,
+                ),
                         reply_markup=InlineKeyboardMarkup(button),
                     )
                     db[chat_id][0]["mystic"] = run
@@ -539,9 +547,12 @@ class Call(PyTgCalls):
                     run = await app.send_photo(
                         chat_id=original_chat_id,
                         photo=config.SOUNCLOUD_IMG_URL,
-                        caption=_["stream_1"].format(
-                            config.SUPPORT_CHAT, title[:23], check[0]["dur"], user
-                        ),
+                        caption=format_stream_caption(
+                    title[:23],
+                    check[0]["dur"],
+                    user,
+                    config.SUPPORT_CHAT,
+                ),
                         reply_markup=InlineKeyboardMarkup(button),
                     )
                     db[chat_id][0]["mystic"] = run
@@ -552,12 +563,12 @@ class Call(PyTgCalls):
                     run = await app.send_photo(
                         chat_id=original_chat_id,
                         photo="https://files.catbox.moe/4vfxve.jpg",
-                        caption=_["stream_1"].format(
-                            f"https://t.me/{app.username}?start=info_{videoid}",
-                            title[:23],
-                            check[0]["dur"],
-                            user,
-                        ),
+                        caption=format_stream_caption(
+                    title[:23],
+                    check[0]["dur"],
+                    user,
+                    f"https://t.me/{app.username}?start=info_{videoid}",
+                ),
                         reply_markup=InlineKeyboardMarkup(button),
                     )
                     db[chat_id][0]["mystic"] = run
