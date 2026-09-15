@@ -16,6 +16,20 @@ from AnonXMusic.utils.stream.queue import put_queue, put_queue_index
 from AnonXMusic.utils.thumbnails import get_thumb
 
 
+def format_stream_caption(title, duration, by):
+    return (
+        f"> ❖ **Sᴛᴀʀᴛᴇᴅ Sᴛʀᴇᴀᴍɪɴɢ**\n"
+        f">\n"
+        f"> ◯ **Tɪᴛʟᴇ :** {title}\n"
+        f">\n"
+        f"> ◯ **Dᴜʀᴀᴛɪᴏɴ :** {duration}\n"
+        f">\n"
+        f"> ◯ **Bʏ :** {by}\n"
+        f">\n"
+        f"> ❖ **Mᴀᴅᴇ Bʏ :** [Ayush](https://t.me/Civilianssz)"
+    )
+
+
 async def stream(
     _,
     mystic,
@@ -103,8 +117,7 @@ async def stream(
                 run = await app.send_photo(
                     original_chat_id,
                     photo="https://files.catbox.moe/4vfxve.jpg",
-                    caption=_["stream_1"].format(
-                        f"https://t.me/{app.username}?start=info_{vidid}",
+                    caption=format_stream_caption(
                         title[:23],
                         duration_min,
                         user_name,
@@ -189,8 +202,7 @@ async def stream(
             run = await app.send_photo(
                 original_chat_id,
                 photo="https://files.catbox.moe/4vfxve.jpg",
-                caption=_["stream_1"].format(
-                    f"https://t.me/{app.username}?start=info_{vidid}",
+                caption=format_stream_caption(
                     title[:23],
                     duration_min,
                     user_name,
@@ -242,8 +254,10 @@ async def stream(
             run = await app.send_photo(
                 original_chat_id,
                 photo=config.SOUNCLOUD_IMG_URL,
-                caption=_["stream_1"].format(
-                    config.SUPPORT_CHAT, title[:23], duration_min, user_name
+                caption=format_stream_caption(
+                    title[:23],
+                    duration_min,
+                    user_name,
                 ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
@@ -296,7 +310,11 @@ async def stream(
             run = await app.send_photo(
                 original_chat_id,
                 photo=config.TELEGRAM_VIDEO_URL if video else config.TELEGRAM_AUDIO_URL,
-                caption=_["stream_1"].format(link, title[:23], duration_min, user_name),
+                caption=format_stream_caption(
+                    title[:23],
+                    duration_min,
+                    user_name,
+                ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
@@ -357,8 +375,7 @@ async def stream(
             run = await app.send_photo(
                 original_chat_id,
                 photo="https://files.catbox.moe/4vfxve.jpg",
-                caption=_["stream_1"].format(
-                    f"https://t.me/{app.username}?start=info_{vidid}",
+                caption=format_stream_caption(
                     title[:23],
                     duration_min,
                     user_name,

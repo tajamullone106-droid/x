@@ -22,6 +22,9 @@ YT_API_KEY = getenv("YT_API_KEY" , None ) ## Optional API key
 YTDLP_API_URL = getenv("YTDLP_API_URL", "https://api.nubcoders.com")
 YTDLP_API_KEY = getenv("YTDLP_API_KEY", None)
 
+SHRUTI_API_URL = getenv("SHRUTI_API_URL", "https://shrutibots.site")
+SHRUTI_API_KEY = getenv("SHRUTI_API_KEY", None)
+
 ## Other vaes
 DURATION_LIMIT_MIN = int(getenv("DURATION_LIMIT", 300))
 

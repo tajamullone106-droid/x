@@ -17,7 +17,8 @@ from ytSearch import VideosSearch, Playlist
 from AnonXMusic import LOGGER
 from AnonXMusic.utils.database import is_on_off
 from AnonXMusic.utils.formatters import time_to_seconds
-from config import YTDLP_API_KEY, YTDLP_API_URL
+from config import YTDLP_API_KEY, YTDLP_API_URL, SHRUTI_API_URL, SHRUTI_API_KEY
+from urllib.parse import urlencode
 
 logger = LOGGER(__name__)
 
@@ -35,6 +36,19 @@ def cookie_txt_file():
     except:
         return None
 
+
+
+def build_shruti_download_url(link: str, media_type: str = "audio") -> str:
+    video_id = link.split("v=")[-1].split("&")[0].split("?")[0]
+    if len(video_id) != 11:
+        video_id = link.rstrip("/").split("/")[-1].split("?")[0]
+
+    params = urlencode({
+        "url": video_id,
+        "type": media_type,
+        "api_key": SHRUTI_API_KEY or "",
+    })
+    return f"{SHRUTI_API_URL.rstrip('/')}/download?{params}"
 
 class YouTubeAPI:
     def __init__(self):
@@ -115,7 +129,7 @@ class YouTubeAPI:
             link = link.split("?si=")[0]
         elif "&si=" in link:
             link = link.split("&si=")[0]
-            
+
         results = VideosSearch(link, limit=1)
         for result in (await results.next())["result"]:
             title = result["title"]
@@ -338,250 +352,109 @@ class YouTubeAPI:
             vid_id = link.split("v=")[-1].split("&")[0].split("?")[0]
             if len(vid_id) != 11:
                 vid_id = link.rstrip("/").split("/")[-1].split("?")[0]
-        loop = asyncio.get_running_loop()
+        if not SHRUTI_API_KEY:
+            logger.error("SHRUTI_API_KEY is not configured")
+            return None
 
-        def create_session():
-            session = requests.Session()
-            retries = Retry(total=3, backoff_factor=0.1)
-            session.mount('http://', HTTPAdapter(max_retries=retries))
-            session.mount('https://', HTTPAdapter(max_retries=retries))
-            return session
+        if not SHRUTI_API_URL:
+            logger.error("SHRUTI_API_URL is not configured")
+            return None
 
-        async def download_with_requests(url, filepath, headers=None):
+        os.makedirs("downloads", exist_ok=True)
+
+        def download_from_shruti(media_type, filepath, timeout):
             try:
-                session = create_session()
-                
-                # Use headers for authentication (including x-api-key)
-                # allow_redirects=True handles redirects, stream=True for large files
-                response = session.get(
-                    url, 
-                    headers=headers, 
-                    stream=True, 
-                    timeout=60,
-                    allow_redirects=True
+                url = build_shruti_download_url(link, media_type)
+
+                response = requests.get(
+                    url,
+                    stream=True,
+                    timeout=timeout,
+                    allow_redirects=True,
+                    headers={
+                        "User-Agent": "X BEATS/1.0"
+                    },
                 )
                 response.raise_for_status()
-                
-                total_size = int(response.headers.get('content-length', 0))
-                downloaded = 0
-                chunk_size = 1024 * 1024  # 1MB chunks for large files
-                
-                with open(filepath, 'wb') as file:
-                    for chunk in response.iter_content(chunk_size=chunk_size):
+
+                with open(filepath, "wb") as file:
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
                         if chunk:
                             file.write(chunk)
-                            downloaded += len(chunk)
-                
-                return filepath
-                
-            except Exception as e:
-                logger.error(f"Requests download failed: {str(e)}")
+
+                if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
+                    return filepath
+
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+
+                return None
+
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Shruti API request failed: {e}")
                 if os.path.exists(filepath):
                     os.remove(filepath)
                 return None
-            finally:
-                session.close()
+
+            except Exception as e:
+                logger.error(f"Shruti download failed: {e}")
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                return None
 
         async def audio_dl(vid_id):
-            try:
-                if not YTDLP_API_KEY:
-                    logger.error("API KEY not set in config, Set API Key you got from @tgmusic_apibot")
-                    return None
-                if not YTDLP_API_URL:
-                    logger.error("API Endpoint not set in config\nPlease set a valid endpoint for YTDLP_API_URL in config.")
-                    return None
-                
-                headers = {
-                    "Authorization": f"Bearer {YTDLP_API_KEY}",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
-                
-                filepath = os.path.join("downloads", f"{vid_id}.mp3")
-                
-                if os.path.exists(filepath):
-                    return filepath
-                
-                session = create_session()
-                getAudio = session.get(f"{YTDLP_API_URL}/stream", params={"q": f"{self.base}{vid_id}", "mode": "audio"}, headers=headers, timeout=60)
-                
-                try:
-                    songData = getAudio.json()
-                except Exception as e:
-                    logger.error(f"Invalid response from API: {str(e)}")
-                    return None
-                finally:
-                    session.close()
-                
-                status = 'success' if songData.get('stream_url') else 'error'
-                if status == 'success':
-                    audio_url = songData['stream_url']                    
-                    result = await download_with_requests(audio_url, filepath, headers)
-                    if result:
-                        return result
-                    
-                    return None
-                    
-                elif status == 'error':
-                    logger.error(f"API Error: {songData.get('message', 'Unknown error from API.')}")
-                    return None
-                else:
-                    logger.error("Could not fetch Backend \nPlease contact API provider.")
-                    return None
-                    
-            except requests.exceptions.RequestException as e:
-                logger.error(f"Network error while fetching audio info: {str(e)}")
-            except json.JSONDecodeError as e:
-                logger.error(f"Invalid response from proxy: {str(e)}")
-            except Exception as e:
-                logger.error(f"Error in audio download: {str(e)}")
-            
-            return None
-        
-        
+            filepath = os.path.join("downloads", f"{vid_id}.mp3")
+
+            if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
+                return filepath
+
+            return await asyncio.to_thread(
+                download_from_shruti,
+                "audio",
+                filepath,
+                300,
+            )
+
         async def video_dl(vid_id):
-            try:
-                if not YTDLP_API_KEY:
-                    logger.error("API KEY not set in config, Set API Key you got from @tgmusic_apibot")
-                    return None
-                if not YTDLP_API_URL:
-                    logger.error("API Endpoint not set in config\nPlease set a valid endpoint for YTDLP_API_URL in config.")
-                    return None
-                
-                headers = {
-                    "Authorization": f"Bearer {YTDLP_API_KEY}",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
-                
-                filepath = os.path.join("downloads", f"{vid_id}.mp4")
-                
-                if os.path.exists(filepath):
-                    return filepath
-                
-                session = create_session()
-                getVideo = session.get(f"{YTDLP_API_URL}/stream", params={"q": f"{self.base}{vid_id}", "mode": "video"}, headers=headers, timeout=60)
-                
-                try:
-                    videoData = getVideo.json()
-                except Exception as e:
-                    logger.error(f"Invalid response from API: {str(e)}")
-                    return None
-                finally:
-                    session.close()
-                
-                status = 'success' if videoData.get('stream_url') else 'error'
-                if status == 'success':
-                    video_url = videoData['stream_url']
-                    #video_url = base64.b64decode(videolink).decode() removed in 3.5.0
-                    
-                    result = await download_with_requests(video_url, filepath, headers)
-                    if result:
-                        return result
-                    
-                    return None
-                    
-                elif status == 'error':
-                    logger.error(f"API Error: {videoData.get('message', 'Unknown error from API.')}")
-                    return None
-                else:
-                    logger.error("Could not fetch Backend \nPlease contact API provider.")
-                    return None
-                    
-            except requests.exceptions.RequestException as e:
-                logger.error(f"Network error while fetching video info: {str(e)}")
-            except json.JSONDecodeError as e:
-                logger.error(f"Invalid response from proxy: {str(e)}")
-            except Exception as e:
-                logger.error(f"Error in video download: {str(e)}")
-            
-            return None
-        
+            filepath = os.path.join("downloads", f"{vid_id}.mp4")
+
+            if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
+                return filepath
+
+            return await asyncio.to_thread(
+                download_from_shruti,
+                "video",
+                filepath,
+                600,
+            )
+
         async def song_video_dl():
-            try:
-                if not YTDLP_API_KEY:
-                    logger.error("API KEY not set in config")
-                    return None
-                if not YTDLP_API_URL:
-                    logger.error("API Endpoint not set in config")
-                    return None
-                
-                headers = {
-                    "Authorization": f"Bearer {YTDLP_API_KEY}",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
-                
-                filepath = f"downloads/{title}.mp4"
-                
-                if os.path.exists(filepath):
-                    return filepath
-                
-                session = create_session()
-                getVideo = session.get(f"{YTDLP_API_URL}/stream", params={"q": f"{self.base}{vid_id}", "mode": "video"}, headers=headers, timeout=60)
-                
-                try:
-                    videoData = getVideo.json()
-                except Exception as e:
-                    logger.error(f"Invalid response from API: {str(e)}")
-                    return None
-                finally:
-                    session.close()
-                
-                status = 'success' if videoData.get('stream_url') else 'error'
-                if status == 'success':
-                    video_url = videoData['stream_url']
-                    
-                    result = await download_with_requests(video_url, filepath, headers)
-                    return result
-                    
-                logger.error(f"API Error: {videoData.get('message', 'Unknown error')}")
-                return None
-                
-            except Exception as e:
-                logger.error(f"Error in song video download: {str(e)}")
-                return None
+            safe_title = re.sub(r'[\\/:*?"<>|]+', "_", str(title))
+            filepath = os.path.join("downloads", f"{safe_title}.mp4")
+
+            if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
+                return filepath
+
+            return await asyncio.to_thread(
+                download_from_shruti,
+                "video",
+                filepath,
+                600,
+            )
 
         async def song_audio_dl():
-            try:
-                if not YTDLP_API_KEY:
-                    logger.error("API KEY not set in config")
-                    return None
-                if not YTDLP_API_URL:
-                    logger.error("API Endpoint not set in config")
-                    return None
-                
-                headers = {
-                    "Authorization": f"Bearer {YTDLP_API_KEY}",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
-                
-                filepath = f"downloads/{title}.mp3"
-                
-                if os.path.exists(filepath):
-                    return filepath
-                
-                session = create_session()
-                getAudio = session.get(f"{YTDLP_API_URL}/stream", params={"q": f"{self.base}{vid_id}", "mode": "audio"}, headers=headers, timeout=60)
-                
-                try:
-                    audioData = getAudio.json()
-                except Exception as e:
-                    logger.error(f"Invalid response from API: {str(e)}")
-                    return None
-                finally:
-                    session.close()
-                
-                status = 'success' if audioData.get('stream_url') else 'error'
-                if status == 'success':
-                    audio_url = audioData['stream_url']
-                    
-                    result = await download_with_requests(audio_url, filepath, headers)
-                    return result
-                    
-                logger.error(f"API Error: {audioData.get('message', 'Unknown error')}")
-                return None
-                
-            except Exception as e:
-                logger.error(f"Error in song audio download: {str(e)}")
-                return None
+            safe_title = re.sub(r'[\\/:*?"<>|]+', "_", str(title))
+            filepath = os.path.join("downloads", f"{safe_title}.mp3")
+
+            if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
+                return filepath
+
+            return await asyncio.to_thread(
+                download_from_shruti,
+                "audio",
+                filepath,
+                300,
+            )
 
         if songvideo:
             fpath = await song_video_dl()
@@ -595,5 +468,5 @@ class YouTubeAPI:
         else:
             direct = True
             downloaded_file = await audio_dl(vid_id)
-        
+
         return downloaded_file, direct
